@@ -4,6 +4,7 @@ import datetime
 import time
 
 from flask import Blueprint
+from flask import abort
 from flask import current_app
 
 
@@ -30,6 +31,9 @@ def health():
 def scan():
     """Read dates"""
     upload = request.files.get("photo")
+
+    if upload is None:
+        abort(400, "no_photo")
 
     image, photo = photos.check(upload.read())
     start = time.perf_counter()
