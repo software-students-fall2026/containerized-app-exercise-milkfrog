@@ -25,5 +25,33 @@ def test_no_text():
 def test_no_date():
     """Text without a date gives no date"""
     found, problems = dates.find(read("NET WT 12 OZ (340g)"))
+
     assert not found
+
     assert problems == ["no_date"]
+
+
+def test_swap():
+    """When month and day can trade places both dates come back, US first"""
+    found, problems = dates.find(read("BEST BY 12/03/2026"))
+    assert [item["date"] for item in found] == ["2026-12-03", "2026-03-12"]
+    assert problems == ["swap"]
+
+
+def test_two_digit_year():
+    """A two digit year means 20xx"""
+
+    found, problems = dates.find(read("SELL BY 11/25/26"))
+
+    assert [item["date"] for item in found] == ["2026-11-25"]
+
+    assert not problems
+
+
+def test_bad_date():
+    """A date that does not exist is not given"""
+    found, problems = dates.find(read("EXP 02/30/2026"))
+
+    assert not found
+
+    assert problems == ["bad_date"]
