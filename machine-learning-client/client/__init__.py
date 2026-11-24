@@ -2,10 +2,18 @@
 
 from flask import Flask
 
+from werkzeug.exceptions import HTTPException
+
 from client import ocr
 from client import routes
 
 from client import scans
+
+
+def refuse(error):
+    """Answer HTTP error"""
+
+    return {"error": error.description}, error.code
 
 
 def create_app(db=None, engine=None):
@@ -23,5 +31,7 @@ def create_app(db=None, engine=None):
     app.config["ENGINE"] = engine
 
     app.register_blueprint(routes.bp)
+
+    app.register_error_handler(HTTPException, refuse)
 
     return app
