@@ -32,3 +32,8 @@ def save(db, scan):
     result = db.scans.insert_one(record)
 
     return str(result.inserted_id)
+
+
+def fail(db, error):
+    """Store scan that broke"""
+    db.scans.insert_one({"time": now(), "status": "failed", "error": error})
