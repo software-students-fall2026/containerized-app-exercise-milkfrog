@@ -11,8 +11,9 @@ from PIL import Image
 from client import create_app
 
 
-def engine(_image):
+def engine(image):
     """Read same two lines from any photo"""
+    assert image.mode == "RGB"
 
     boxes = [[[0, 0], [9, 0], [9, 9], [0, 9]], [[0, 9], [9, 9], [9, 18], [0, 18]]]
 
