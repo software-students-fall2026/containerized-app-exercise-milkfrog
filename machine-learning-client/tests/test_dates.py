@@ -103,3 +103,35 @@ def test_time():
     found, problems = dates.find(read("BEST BY 9:26 MAR 2027"), TODAY)
     assert [item["date"] for item in found] == ["2027-03-31"]
     assert problems == ["no_day"]
+
+
+def test_labels():
+    """Each date takes the nearest label on its left, and use by comes before sell by"""
+    text = "PACKED ON 11/15/2026 SELL BY 11/25/2026 USE BY 11/22/2026"
+    found, problems = dates.find(read(text), TODAY)
+    assert found == [
+        {"date": "2026-11-22", "label": "use", "raw": "11/22/2026"},
+        {"date": "2026-11-25", "label": "sell", "raw": "11/25/2026"},
+        {"date": "2026-11-15", "label": "made", "raw": "11/15/2026"},
+    ]
+    assert problems == ["many"]
+
+
+def test_same_date():
+    """A date printed twice is listed once, with the better label"""
+    text = "SELL BY 12/15/2026\nBEST BY 12/15/2026"
+    found, problems = dates.find(read(text), TODAY)
+    assert found == [{"date": "2026-12-15", "label": "best", "raw": "12/15/2026"}]
+    assert not problems
+
+
+def test_label_above():
+    """A label alone on a line goes to the date on the next line only"""
+    found, _ = dates.find(read("EXP\n12/15/2026\n12/20/2026"), TODAY)
+    assert [item["label"] for item in found] == ["exp", "none"]
+
+
+def test_later_first():
+    """Of two dates without a label the later one comes first"""
+    found, _ = dates.find(read("2026.06.01\n2027.06.01"), TODAY)
+    assert [item["date"] for item in found] == ["2027-06-01", "2026-06-01"]
