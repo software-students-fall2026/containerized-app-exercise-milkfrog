@@ -51,3 +51,24 @@ def test_scan(client, db, jpeg):
     }
     assert record["status"] == "done"
     assert record["engine"] == "rapidocr"
+
+
+def test_no_photo(client):
+    """request without photo is refused"""
+    reply = client.post("/scan", data={})
+    assert reply.status_code == 400
+    assert reply.get_json() == {"error": "no_photo"}
+
+
+def test_empty(client):
+    """empty photo is refused"""
+    reply = post(client, b"")
+    assert reply.status_code == 400
+    assert reply.get_json() == {"error": "empty"}
+
+
+def test_not_image(client):
+    """file that is not JPEG or PNG is refused"""
+    reply = post(client, b"this is not a photo")
+    assert reply.status_code == 400
+    assert reply.get_json() == {"error": "not_image"}
