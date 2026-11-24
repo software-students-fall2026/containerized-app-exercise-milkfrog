@@ -10,6 +10,11 @@ def post(client, data):
     return client.post("/scan", data={"photo": (io.BytesIO(data), "photo.jpg")})
 
 
+def broken(_image):
+    """Break like engine that cannot read"""
+    raise RuntimeError("no model")
+
+
 def test_defaults(monkeypatch):
     """Without arguments app opens database and starts engine"""
     monkeypatch.setattr(scans, "connect", lambda: "db")
@@ -17,6 +22,7 @@ def test_defaults(monkeypatch):
     app = create_app()
     assert app.config["DB"] == "db"
     assert app.config["ENGINE"] == "engine"
+    assert app.config["MAX_CONTENT_LENGTH"] == 10 * 1024 * 1024
 
 
 def test_health(client):
@@ -72,3 +78,21 @@ def test_not_image(client):
     reply = post(client, b"this is not a photo")
     assert reply.status_code == 400
     assert reply.get_json() == {"error": "not_image"}
+
+
+def test_too_big(client):
+    """request over 10 MB is refused"""
+    reply = post(client, bytes(10 * 1024 * 1024 + 1))
+    assert reply.status_code == 413
+    assert reply.get_json() == {"error": "too_big"}
+
+
+def test_engine_breaks(db, jpeg):
+    """engine that breaks gives 500 and failed scan"""
+    client = create_app(db, broken).test_client()
+    reply = post(client, jpeg)
+    record = db.scans.find_one()
+    assert reply.status_code == 500
+    assert reply.get_json() == {"error": "failed"}
+    assert set(record) == {"_id", "time", "status", "error"}
+    assert record["status"] == "failed"
