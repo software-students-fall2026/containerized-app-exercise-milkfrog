@@ -5,6 +5,7 @@ import io
 from flask import abort
 
 from PIL import Image
+from PIL import ImageOps
 
 
 def check(data):
@@ -15,6 +16,8 @@ def check(data):
     try:
         image = Image.open(io.BytesIO(data), formats=["JPEG", "PNG"])
         kind = image.format
+
+        image = ImageOps.exif_transpose(image).convert("RGB")
 
     except OSError:
         abort(400, "not_image")
