@@ -4,10 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+flask = "*"
+pymongo = "*"
+pillow = "*"
+rapidocr = "==3.10.0"
+onnxruntime = "==1.32.0"
+opencv-python-headless = "<5"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+mongomock = "*"
 pylint = "*"
 black = "*"
 
-[dev-packages]
-
 [requires]
-python_version = "3.10"
+python_version = "3.13"
