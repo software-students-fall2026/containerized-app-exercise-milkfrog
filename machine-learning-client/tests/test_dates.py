@@ -55,3 +55,17 @@ def test_bad_date():
     assert not found
 
     assert problems == ["bad_date"]
+
+
+def test_month_name():
+    """A full month name"""
+    found, problems = dates.find(read("Best if Used By December 3, 2026"))
+    assert [item["date"] for item in found] == ["2026-12-03"]
+    assert not problems
+
+
+def test_day_first():
+    """A day before the month name"""
+    found, problems = dates.find(read("BEST BEFORE 03 DEC 2026"))
+    assert [item["date"] for item in found] == ["2026-12-03"]
+    assert not problems

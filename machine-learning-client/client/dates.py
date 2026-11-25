@@ -3,14 +3,23 @@
 import datetime
 import re
 
+NAME = (
+    "(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER"
+    "|JAN|FEB|MAR|APR|JUN|JUL|AUG|SEP|OCT|NOV|DEC)"
+)
+
 
 def numbers(groups):
     """Turn date into numbers"""
+    months = "JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC".split()
 
     parts = []
 
     for part in groups:
-        parts.append(int(part))
+        if part.isdigit():
+            parts.append(int(part))
+        else:
+            parts.append(months.index(part[:3].upper()) + 1)
     return parts
 
 
@@ -33,15 +42,23 @@ def read(way, parts):
         year, month, day = parts
         return make(year, month, day), ""
 
-    first, second, year = parts
-    days = make(year, first, second)
+    if way == 2:
+        first, second, year = parts
+        days = make(year, first, second)
 
-    if first != second:
-        days = days + make(year, second, first)
-    note = ""
-    if len(days) == 2:
-        note = "swap"
-    return days, note
+        if first != second:
+            days = days + make(year, second, first)
+        note = ""
+        if len(days) == 2:
+            note = "swap"
+        return days, note
+
+    if way == 3:
+        month, day, year = parts
+        return make(year, month, day), ""
+
+    day, month, year = parts
+    return make(year, month, day), ""
 
 
 def scan(text):
@@ -49,6 +66,8 @@ def scan(text):
     ways = [
         r"\b(20\d\d)[./-](\d{1,2})[./-](\d{1,2})\b",
         r"\b(\d{1,2})[./-](\d{1,2})[./-](20\d\d|\d\d)\b",
+        r"\b" + NAME + r"[ .,/-]*(\d{1,2})[ .,/-]*(20\d\d)\b",
+        r"\b(\d{1,2})[ .,/-]*" + NAME + r"[ .,/-]*(20\d\d|\d\d)\b",
     ]
 
     hits = []
@@ -56,10 +75,11 @@ def scan(text):
     for pattern in ways:
         way = way + 1
 
-        for match in re.finditer(pattern, text):
+        for match in re.finditer(pattern, text, re.I):
             raw = match.group()
 
             days, note = read(way, numbers(match.groups()))
+
             if not days:
                 note = "bad_date"
 
