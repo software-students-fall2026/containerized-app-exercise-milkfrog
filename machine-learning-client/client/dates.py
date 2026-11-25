@@ -206,6 +206,8 @@ def find(lines, today):
 
             if hit["days"]:
                 hits.append(hit)
+                if line["score"] < 0.8:
+                    notes.append("blurry")
 
     hits.sort(key=lambda hit: hit["days"][0], reverse=True)
 
@@ -220,7 +222,7 @@ def find(lines, today):
         notes.append("no_date")
 
     problems = []
-    for name in "no_text no_date many no_year no_day swap bad_date".split():
+    for name in "no_text no_date many no_year no_day swap bad_date blurry".split():
         if name in notes:
             problems.append(name)
 
