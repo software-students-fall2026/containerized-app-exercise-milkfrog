@@ -90,7 +90,29 @@ def read(way, parts, today):
     return near(month, day, today), "no_year"
 
 
-def scan(text, today):
+def label(text):
+    """label printed last in a piece of text"""
+
+    labels = [
+        ("best", r"\bBEST (IF USED BY|BEFORE|BY)\b"),
+        ("use", r"\bUSE BY\b"),
+        ("sell", r"\bSELL BY\b"),
+        ("exp", r"\b(EXPIRES|EXPIRY|EXP)\b"),
+        ("made", r"\b(PACKED ON|MFG|MFD)\b"),
+    ]
+
+    name = "none"
+    last = -1
+    for word, pattern in labels:
+        for match in re.finditer(pattern, text, re.I):
+            if match.start() > last:
+                last = match.start()
+                name = word
+
+    return name
+
+
+def scan(text, above, today):
     """Find date printed on one line"""
     ways = [
         r"\b(20\d\d)[./-](\d{1,2})[./-](\d{1,2})\b",
@@ -116,12 +138,24 @@ def scan(text, today):
 
             if not days:
                 note = "bad_date"
+            name = label(text[:start])
 
-            hits.append({"days": days, "label": "none", "raw": raw, "note": note})
+            if name == "none":
+                name = above
+
+            hits.append({"days": days, "label": name, "raw": raw, "note": note})
 
             rest = rest[:start] + "#" * len(raw) + rest[end:]
 
     return hits
+
+
+def order(hit):
+    """rank of hit label"""
+
+    rank = {"best": 0, "use": 0, "exp": 0, "sell": 1, "none": 2, "made": 3}
+
+    return rank[hit["label"]]
 
 
 def out(hits):
@@ -129,13 +163,17 @@ def out(hits):
 
     found = []
 
+    seen = []
+
     for hit in hits:
 
         for day in hit["days"]:
 
             item = {"date": day.isoformat(), "label": hit["label"], "raw": hit["raw"]}
 
-            found.append(item)
+            if day not in seen:
+                seen.append(day)
+                found.append(item)
 
     return found
 
@@ -149,10 +187,19 @@ def find(lines, today):
     hits = []
     notes = []
 
+    above = "none"
+
     for line in lines:
         text = re.sub(r"\d{1,2}:\d\d", " ", line["text"])
 
-        for hit in scan(text, today):
+        fresh = scan(text, above, today)
+
+        above = "none"
+
+        if not fresh:
+            above = label(text)
+
+        for hit in fresh:
 
             if hit["note"]:
                 notes.append(hit["note"])
@@ -160,11 +207,20 @@ def find(lines, today):
             if hit["days"]:
                 hits.append(hit)
 
+    hits.sort(key=lambda hit: hit["days"][0], reverse=True)
+
+    hits.sort(key=order)
+
+    for hit in hits:
+        if hit["days"][0] != hits[0]["days"][0]:
+            notes.append("many")
+            break
+
     if not hits and "bad_date" not in notes:
         notes.append("no_date")
 
     problems = []
-    for name in "no_text no_date no_year no_day swap bad_date".split():
+    for name in "no_text no_date many no_year no_day swap bad_date".split():
         if name in notes:
             problems.append(name)
 
