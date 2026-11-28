@@ -1,0 +1,1 @@
+"""Food inventory and persistence."""
