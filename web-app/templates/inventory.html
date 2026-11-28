@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Food inventory</h1>
+    <p>Find and manage the package dates for the food you have.</p>
+  </div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('inventory.create') }}">Add manually</a>
+    <a class="button" href="{{ url_for('scans.capture') }}">Scan a photo</a>
+  </div>
+</div>
+<form class="panel filters" method="get" aria-label="Filter food inventory">
+  <label>Search food
+    <input type="search" name="q" maxlength="100" value="{{ q }}" placeholder="e.g. Yogurt">
+  </label>
+  <label>Storage
+    <select name="place">
+      <option value="">All locations</option>
+      {% for key, label in places.items() %}
+        <option value="{{ key }}"{% if place == key %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Date order
+    <select name="order">
+      <option value="asc"{% if order == 'asc' %} selected{% endif %}>Earliest first</option>
+      <option value="desc"{% if order == 'desc' %} selected{% endif %}>Latest first</option>
+    </select>
+  </label>
+  <button class="secondary" type="submit">Apply filters</button>
+</form>
+
+{% if foods %}
+  <p class="results">{{ foods|length }} {{ 'item' if foods|length == 1 else 'items' }}</p>
+  <ul class="food-list">
+    {% for food in foods %}
+      <li class="panel food-row">
+        <div><h2>{{ food.name }}</h2><span class="muted">{{ places[food.place] }}</span></div>
+        <div><span class="muted">{{ labels[food.label] if food.label != 'none' else 'Package date' }}</span><br>
+          <time datetime="{{ food.date }}">{{ food.date }}</time>
+        </div>
+        {% if reminder_for %}
+          {% set reminder = reminder_for(food.date) %}
+          {% if reminder %}
+            <span class="tag reminder-{{ reminder.state }}">{{ reminder.text }}</span>
+          {% endif %}
+        {% endif %}
+        <a class="button secondary small edit-link" aria-label="Edit {{ food.name }}" href="{{ url_for('inventory.update', key=food.id) }}">Edit</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <section class="panel empty">
+    {% if q or place %}
+      <h2>No foods match these filters</h2>
+      <a href="{{ url_for('inventory.index') }}">Clear filters</a>
+    {% else %}
+      <h2>Your inventory is empty</h2>
+      <p>Scan a package date or add your first food manually.</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}
