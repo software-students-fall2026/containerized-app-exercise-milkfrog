@@ -1,0 +1,25 @@
+<label for="food-name">Food name</label>
+<input id="food-name" name="name" value="{{ values.get('name', '') }}" maxlength="100" required placeholder="e.g. Yogurt">
+
+<div class="field-pair">
+  <div>
+    <label for="food-date">Package date</label>
+    <input id="food-date" type="date" name="date" value="{{ values.get('date', '') }}" required>
+  </div>
+  <div>
+    <label for="food-label">Date label</label>
+    <select id="food-label" name="label" required>
+      {% for key, label in labels.items() %}
+        <option value="{{ key }}"{% if values.get('label', 'none') == key %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<label for="food-place">Storage location</label>
+<select id="food-place" name="place" required>
+  <option value="">Choose a location</option>
+  {% for key, label in places.items() %}
+    <option value="{{ key }}"{% if values.get('place') == key %} selected{% endif %}>{{ label }}</option>
+  {% endfor %}
+</select>

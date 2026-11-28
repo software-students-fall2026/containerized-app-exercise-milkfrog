@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-heading"><h1>{{ title }}</h1></div>
+<form method="post" class="panel form-panel">
+  {% if error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if submission %}<input type="hidden" name="submission" value="{{ submission }}">{% endif %}
+  {% include "_food_fields.html" %}
+  <div class="actions">
+    <button type="submit" data-pending="Saving…">Save food</button>
+    <a class="button secondary" href="{{ url_for('inventory.index') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
